@@ -1,5 +1,5 @@
 /* Space Xplorer project - Cowan McVeigh @UWE - 23035003
-Version 7.0
+Version 8.0
 Date 09/05/2025
 */
 #include <stdio.h>
@@ -32,6 +32,7 @@ void SpaceFieldArray(char Arr[R][C], int *DestinationRow, int *DestinationCol) {
         for (int j = 0; j < C; j++) {
             int x = rand() % 18;
             if (x < 2 && asteroidsCount < Max_Asteroids) {// Added the new asteroids into the function
+                Arr[i][j] = Asteroid;
                 asteroids[asteroidsCount].row = i;// This will generate the asteroids and all their relevant information
                 asteroids[asteroidsCount].col = j;
                 asteroids[asteroidsCount].dRow = 1;
@@ -55,14 +56,8 @@ void SpaceFieldArray(char Arr[R][C], int *DestinationRow, int *DestinationCol) {
     Arr[*DestinationRow][*DestinationCol] = Destination;
 
 }
-void CS() { // I had to use this Clear Screen function to make my code more efficient as cls was too slow
-    HANDLE hOut;
-    COORD Position;
-    hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    Position.X = 0;
-    Position.Y = 0;
-    SetConsoleCursorPosition(hOut, Position);
-}
+
+
 
 
 void FormSpace(char Arr[R][C], int moveRow, int moveCol) {// This function prints the game grid
@@ -87,10 +82,10 @@ void FormSpace(char Arr[R][C], int moveRow, int moveCol) {// This function print
 
 void MoveAsteroids(char Arr[R][C]) {
     for (int i = 0; i < asteroidsCount; i++) {
-        int oldRow = asteroids[i].dRow;
-        int oldCol = asteroids[i].dCol;
-        int newRow = asteroids[i].dRow;
-        int newCol = asteroids[i].dCol;
+        int oldRow = asteroids[i].row;
+        int oldCol = asteroids[i].col;
+        int newRow = oldRow + asteroids[i].dRow;
+        int newCol = oldCol + asteroids[i].dCol;
 
         if (newRow < 0 || newRow >= R) {
             asteroids[i].dRow *= -1;
@@ -105,8 +100,24 @@ void MoveAsteroids(char Arr[R][C]) {
         }
         Arr[oldRow][oldCol] = Empty;
         Arr[newRow][newCol] = Asteroid;
-        asteroids[i].dRow = newRow;
-        asteroids[i].dCol = newCol;
+        asteroids[i].row = newRow;
+        asteroids[i].col = newCol;
+    }
+}
+
+void DestinationHint (int moveRow, int moveCol, int destinationRow, int destinationCol) {
+    if (destinationRow < moveRow) {
+        printf("UP\n");
+    } else if (destinationRow > moveRow) {
+        printf("DOWN\n");
+    }
+    if (destinationCol < moveCol) {
+        printf("LEFT\n");
+    } else if (destinationCol > moveCol) {
+        printf("RIGHT\n");
+    }
+    if (destinationRow != moveRow && destinationCol != moveCol) {
+        printf("DIAGONAL SIGNAL\n");
     }
 }
 
@@ -118,63 +129,59 @@ int main() {// The Game itself
     SpaceFieldArray(Arr, &destinationRow, &destinationCol);
 
     int fuel = 7;
-    char *CurrentPos = &Arr[moveRow][moveCol];
     char movement;
     while (fuel > 0){
-        system("cls"); // Clears the console
+
         FormSpace(Arr, moveRow, moveCol);// Receives the full generated array for the game
+        DestinationHint(moveRow, moveCol, destinationRow, destinationCol); // Prints the hint
         printf("Fuel: %d\n", fuel); // HUD information
         printf("Move: (w = up/a = Left/s = Down/d = Right): "); //Key
-        scanf(" %c", &movement);
 
-        int NextRow = moveRow, NextCol = moveCol; //Creating non-defined variables that can be changed in the script.
+        Sleep(500);// Give the player some time to see the grid
+        movement = getchar(); //This reads a single character
+        while (getchar() != '\n'); // Empties the input buffer to stop it from reading \n's
 
-        if (movement == 'w')  NextRow--; // How the movement works by incrementing the array up/down etc.
-        else if (movement == 's') NextRow++;
-        else if (movement == 'a') NextCol--;
-        else if (movement == 'd') NextCol++;
+        if (movement == 'w')  moveRow--; // How the movement works by incrementing the array up/down etc.
+        else if (movement == 's') moveRow++;
+        else if (movement == 'a') moveCol--;
+        else if (movement == 'd') moveCol++;
 
-        printf("DEBUG: Trying to move to (%d, %d): contains '%c'\n", NextRow, NextCol, Arr[NextRow][NextCol]);
+       if (moveRow < 0 || moveRow >= R || moveCol < 0 || moveCol >= C) { // Boundary check to keep the player inbounds
+           printf("You can't flee the Mission!\n");
+           Sleep(500);
+           continue;
+       }
 
-        fflush(stdout);
-        Sleep(1000);
-        system("cls");
-
-
-        if (NextRow < 0 || NextRow >= R || NextCol < 0 || NextCol >= C) {// Creating boundaries for the game
-            printf("You can't flee the Mission!\n");
-            continue;
-
-        }
-
-        CurrentPos = &Arr[NextRow][NextCol];
+        char *CurrentPos = &Arr[moveRow][moveCol];
 
         if (*CurrentPos == Asteroid) {// Asterioid is the fail condition
-            printf("You have been hit by an asteroid! Mission Failed!\n");
+            printf("SPACECRFT CRASH... RESULT = MISSION FAILURE\n");
             break;
         } else {
-            moveRow = NextRow;
-            moveCol = NextCol;
 
             if (*CurrentPos == Fuel) {
                 fuel += 5; // Adds fuel when you hit a Fuel space
-                printf("You have collected fuel!\n");
+                printf("FUEL UP\n");
                 *CurrentPos = Empty; // Empties the space as the fuel is consumed
             }
             fuel--; // Makes it so that every move will consume a singular fuel unit
         }
         if (*CurrentPos == Destination){
-            printf("You have been hit by a destination! Mission Success!\n");
+            printf("DESTINATION REACHED... RESULT = MISSION SUCCESS\n");
             break;
 
         }
+        MoveAsteroids(Arr); // Moves the asteroids using the function
+        if (Arr[moveRow][moveCol] == Asteroid) {
+            printf("HULL BREACHED... RESULT = MISSION FAILURE\n");
+            break;
+        }
 
-
-
+        Sleep(500); // Wait for the next iteration to render before displaying
 
     }
     if (fuel <= 0) {
-        printf("You ran out of fuel... Game over.\n");
+        printf("FUEL TANK EMPTY... RESULT = MISSION FAILURE\n");
     }
     return 0;
 }
