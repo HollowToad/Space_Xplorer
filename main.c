@@ -1,29 +1,47 @@
 /* Space Xplorer project - Cowan McVeigh @UWE - 23035003
-Version 5.0
+Version 7.0
 Date 09/05/2025
 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <string.h>
 #include <windows.h>
 
 #define R 18 // Defining Rows to be 18 along
 #define C 18 // Defining Columns to be 18 Down
 
-#define Asteroid '*'
+#define Asteroid '*' // The characters used in the game
 #define Fuel '!'
 #define Empty '0'
 #define Destination 'X'
+#define Max_Asteroids 50
+
+typedef struct { //Struct for the characteristics of the asteroids
+    int row;
+    int col;
+    int dRow;
+    int dCol;
+} AsteroidInfo;
+
+AsteroidInfo asteroids[Max_Asteroids];
+int asteroidsCount = 0;
 
 void SpaceFieldArray(char Arr[R][C], int *DestinationRow, int *DestinationCol) {// This function decides how to populate the array with desired variables
     srand(time(NULL));
     for (int i = 0; i < R; i++) {
         for (int j = 0; j < C; j++) {
             int x = rand() % 18;
-            if (x < 2) Arr[i][j] = Asteroid; // This makes every 2 in 10 spaces an asteroid (20%)
-            else if (x < 4) Arr[i][j] = Fuel; // This makes every 4 in 10 spaces a fuel (40%)
-            else Arr[i][j] = Empty; // This makes every 5 in 10 spaces an empty space (50%)
+            if (x < 2 && asteroidsCount < Max_Asteroids) {// Added the new asteroids into the function
+                asteroids[asteroidsCount].row = i;// This will generate the asteroids and all their relevant information
+                asteroids[asteroidsCount].col = j;
+                asteroids[asteroidsCount].dRow = 1;
+                asteroids[asteroidsCount].dCol = 0;
+                asteroidsCount++;
+            } else if (x < 4) {
+                Arr[i][j] = Fuel;// % of Fuel spawns
+            } else {
+                Arr[i][j] = Empty;
+            }
         }
     }
 
@@ -37,21 +55,61 @@ void SpaceFieldArray(char Arr[R][C], int *DestinationRow, int *DestinationCol) {
     Arr[*DestinationRow][*DestinationCol] = Destination;
 
 }
-
+void CS() { // I had to use this Clear Screen function to make my code more efficient as cls was too slow
+    HANDLE hOut;
+    COORD Position;
+    hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    Position.X = 0;
+    Position.Y = 0;
+    SetConsoleCursorPosition(hOut, Position);
+}
 
 
 void FormSpace(char Arr[R][C], int moveRow, int moveCol) {// This function prints the game grid
-    for (int i = 0; i < R; i++) {
-        for (int j = 0; j < C; j++) {
-            if (i == moveRow && j == moveCol) {
-                printf("A ");// '0' is marking the player's position in the array, This line shows where they are
-            }else {
-                printf("%c ", Arr[i][j]); // This line displays what the prior function placed in this cell
-         }
+    int startRow = moveRow - 2;
+    int startCol = moveCol - 2;
+
+    for (int i = startRow; i < startRow + 5; i++) {// Only shows 5x5 around the player
+        for (int j = startCol; j < startCol + 5; j++) {
+            if (i >= 0 && i < R && j >= 0 && j < C) {
+                if (i == moveRow && j == moveCol) {
+                    printf("A "); //Players position
+                } else {
+                    printf("%c ", Arr[i][j]);
+                }
+            } else {
+                printf(" ");
+            }
         }
-        printf("\n"); //It then goes to the next row and displays the cells
+        printf("\n");
     }
 }
+
+void MoveAsteroids(char Arr[R][C]) {
+    for (int i = 0; i < asteroidsCount; i++) {
+        int oldRow = asteroids[i].dRow;
+        int oldCol = asteroids[i].dCol;
+        int newRow = asteroids[i].dRow;
+        int newCol = asteroids[i].dCol;
+
+        if (newRow < 0 || newRow >= R) {
+            asteroids[i].dRow *= -1;
+            newRow = oldRow + asteroids[i].dRow;
+        }
+        if (newCol < 0 || newCol >= C) {
+            asteroids[i].dCol *= -1;
+            newCol = oldCol + asteroids[i].dCol;
+        }
+        if (Arr[newRow][newCol] == Destination) {
+            continue;
+        }
+        Arr[oldRow][oldCol] = Empty;
+        Arr[newRow][newCol] = Asteroid;
+        asteroids[i].dRow = newRow;
+        asteroids[i].dCol = newCol;
+    }
+}
+
 int main() {// The Game itself
     char Arr[R][C];
     int moveRow = R / 2, moveCol = C / 2;
@@ -110,8 +168,8 @@ int main() {// The Game itself
             break;
 
         }
-        Sleep(1300);
-        system("cls");
+
+
 
 
     }
