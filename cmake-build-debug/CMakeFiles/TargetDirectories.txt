@@ -1,0 +1,3 @@
+C:/Users/cowan/CLionProjects/SpaceXplorer/cmake-build-debug/CMakeFiles/SpaceXplorer.dir
+C:/Users/cowan/CLionProjects/SpaceXplorer/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/cowan/CLionProjects/SpaceXplorer/cmake-build-debug/CMakeFiles/rebuild_cache.dir
