@@ -1,5 +1,5 @@
 /* Space Xplorer project - Cowan McVeigh @UWE - 23035003
-Version 8.0
+Version 9.0
 Date 09/05/2025
 */
 #include <stdio.h>
@@ -82,25 +82,25 @@ void FormSpace(char Arr[R][C], int moveRow, int moveCol) {// This function print
 
 void MoveAsteroids(char Arr[R][C]) {
     for (int i = 0; i < asteroidsCount; i++) {
-        int oldRow = asteroids[i].row;
+        int oldRow = asteroids[i].row; // Current position
         int oldCol = asteroids[i].col;
-        int newRow = oldRow + asteroids[i].dRow;
+        int newRow = oldRow + asteroids[i].dRow; // Calculates new position
         int newCol = oldCol + asteroids[i].dCol;
 
-        if (newRow < 0 || newRow >= R) {
+        if (newRow < 0 || newRow >= R) { // Makes the asteroids bounce off the ceiling
             asteroids[i].dRow *= -1;
             newRow = oldRow + asteroids[i].dRow;
         }
-        if (newCol < 0 || newCol >= C) {
+        if (newCol < 0 || newCol >= C) { // Makes them bounce off the walls
             asteroids[i].dCol *= -1;
             newCol = oldCol + asteroids[i].dCol;
         }
-        if (Arr[newRow][newCol] == Destination) {
-            continue;
+        if (Arr[newRow][newCol] == Destination) {// stops the asteroid from landing on top of the destination
+            continue;// skips it
         }
-        Arr[oldRow][oldCol] = Empty;
-        Arr[newRow][newCol] = Asteroid;
-        asteroids[i].row = newRow;
+        Arr[oldRow][oldCol] = Empty; // Clears the old space
+        Arr[newRow][newCol] = Asteroid; // Places an asteroid in the new space
+        asteroids[i].row = newRow; // Updates the struct's info on where the asteroid is
         asteroids[i].col = newCol;
     }
 }
